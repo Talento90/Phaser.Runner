@@ -1,6 +1,6 @@
 ﻿module Runner {
 
-    //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
+    //Preload bar and loading all assets 
     export class Preload extends Phaser.State {
 
         private preloadBarTopPadding: number;
@@ -15,7 +15,6 @@
             this.ready = false;
         }
 
-        //First method to run when the object is instanciated
         public preload () {
             this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
             this.splash.anchor.setTo(0.5); //Image origin point It's always (0,0) but with this is in the middle.

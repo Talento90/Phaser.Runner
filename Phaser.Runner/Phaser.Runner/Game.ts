@@ -9,6 +9,7 @@
             //Add Game States
             this.state.add("Boot", Runner.Boot);
             this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
 
             //Start the Boot State (It's always the first state)
             this.state.start("Boot");

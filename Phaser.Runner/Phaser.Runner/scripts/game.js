@@ -9,6 +9,25 @@ var __extends = this.__extends || function (d, b) {
 };
 var Runner;
 (function (Runner) {
+    var Game = (function (_super) {
+        __extends(Game, _super);
+        function Game() {
+            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return Game;
+    })(Phaser.Game);
+    Runner.Game = Game;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
     //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
     var Boot = (function (_super) {
         __extends(Boot, _super);
@@ -63,7 +82,32 @@ var Runner;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
-    //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
+    var MainMenu = (function (_super) {
+        __extends(MainMenu, _super);
+        function MainMenu() {
+            _super.call(this);
+            this.backgroundVelocity = -100;
+            this.floorVelocity = -400;
+        }
+        MainMenu.prototype.create = function () {
+            //Paralax effect - floor is faster than the back and foreground
+            //TileSprite are Tiles (azuleijos) so then just reapeat...
+            this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
+            this.background.autoScroll(this.backgroundVelocity, 0);
+
+            this.foreground = this.game.add.tileSprite(0, 470, this.game.width, this.game.height - 533, 'foreground');
+            this.foreground.autoScroll(this.backgroundVelocity, 0);
+
+            this.ground = this.game.add.tileSprite(0, this.game.height - 73, this.game.width, 73, 'ground');
+            this.ground.autoScroll(this.floorVelocity, 0);
+        };
+        return MainMenu;
+    })(Phaser.State);
+    Runner.MainMenu = MainMenu;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    //Preload bar and loading all assets
     var Preload = (function (_super) {
         __extends(Preload, _super);
         function Preload() {
@@ -72,7 +116,6 @@ var Runner;
             this.preloadBarTopPadding = 128;
             this.ready = false;
         }
-        //First method to run when the object is instanciated
         Preload.prototype.preload = function () {
             this.splash = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'logo');
             this.splash.anchor.setTo(0.5); //Image origin point It's always (0,0) but with this is in the middle.
@@ -117,23 +160,5 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
-    var Game = (function (_super) {
-        __extends(Game, _super);
-        function Game() {
-            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return Game;
-    })(Phaser.Game);
-    Runner.Game = Game;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map

@@ -57,6 +57,7 @@
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="Game.ts" />
     <TypeScriptCompile Include="game\states\Boot.ts" />
+    <TypeScriptCompile Include="game\states\MainMenu.ts" />
     <TypeScriptCompile Include="game\states\Preload.ts" />
     <TypeScriptCompile Include="scripts\phaser.d.ts" />
   </ItemGroup>
