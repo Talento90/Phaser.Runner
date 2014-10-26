@@ -42,6 +42,9 @@
             this.load.audio('coin', 'assets/audio/coin.wav');
             this.load.audio('death', 'assets/audio/death.wav');
 
+            //Loading fonts
+            this.load.bitmapFont('minecraftia', 'assets/fonts/minecraftia/minecraftia.png', 'assets/fonts/minecraftia/minecraftia.xml');
+
             //When loader object complete then run the onLoadComplete  function.
             this.load.onLoadComplete.add(this.onLoadComplete, this);
         }
