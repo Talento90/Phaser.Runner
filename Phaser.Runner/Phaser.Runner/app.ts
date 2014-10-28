@@ -1,5 +1,5 @@
 ﻿
 window.onload = () => {
-    var game = new Runner.Game();
+    var game = new Runner.PhaserRunner();
 };
 
