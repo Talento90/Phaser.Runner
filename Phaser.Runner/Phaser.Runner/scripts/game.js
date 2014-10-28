@@ -9,26 +9,6 @@ var __extends = this.__extends || function (d, b) {
 };
 var Runner;
 (function (Runner) {
-    var PhaserRunner = (function (_super) {
-        __extends(PhaserRunner, _super);
-        function PhaserRunner() {
-            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-            this.state.add("MainMenu", Runner.MainMenu);
-            this.state.add("Game", Runner.Game);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return PhaserRunner;
-    })(Phaser.Game);
-    Runner.PhaserRunner = PhaserRunner;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
     //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
     var Boot = (function (_super) {
         __extends(Boot, _super);
@@ -87,11 +67,9 @@ var Runner;
         __extends(Game, _super);
         function Game() {
             _super.call(this);
-            this.playerMinAngle = -20;
-            this.playerMaxAngle = 20;
             this.backgroundVelocity = -100;
-            this.playerMinAngle = -20;
-            this.playerMaxAngle = 20;
+            this.playerMinAngle = -15;
+            this.playerMaxAngle = 15;
         }
         Game.prototype.create = function () {
             this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
@@ -268,5 +246,25 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var PhaserRunner = (function (_super) {
+        __extends(PhaserRunner, _super);
+        function PhaserRunner() {
+            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+            this.state.add("Game", Runner.Game);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return PhaserRunner;
+    })(Phaser.Game);
+    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map

@@ -7,14 +7,14 @@
         private ground: Phaser.TileSprite;
         private player: Phaser.Sprite;
         private backgroundVelocity: number;
-        private playerMinAngle: number = -20;
-        private playerMaxAngle: number = 20;
+        private playerMinAngle: number;
+        private playerMaxAngle: number;
 
         constructor() {
             super();
             this.backgroundVelocity = -100;
-            this.playerMinAngle = -20;
-            this.playerMaxAngle = 20;
+            this.playerMinAngle = -15;
+            this.playerMaxAngle = 15;
         }
 
 
@@ -77,7 +77,7 @@
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
         }
 
-        private groundHit (player, ground) {
+        private groundHit(player, ground) {
             player.body.velocity.y = -100;
         }
     }
