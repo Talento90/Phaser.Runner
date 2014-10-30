@@ -9,6 +9,101 @@ var __extends = this.__extends || function (d, b) {
 };
 var Runner;
 (function (Runner) {
+    var Coin = (function (_super) {
+        __extends(Coin, _super);
+        function Coin(game, x, y, key, frame) {
+            _super.call(this, game, x, y, "coins", frame);
+
+            //Setup the coins
+            this.scale.setTo(0.5);
+            this.anchor.setTo(0.5);
+
+            this.animations.add('spin');
+
+            this.game.physics.arcade.enableBody(this);
+            this.body.allowGravity = false;
+
+            //Check if the coin is out of the screen
+            this.checkWorldBounds = true;
+
+            //If coins is out of the screen then kill the coin
+            this.outOfBoundsKill = true;
+
+            //Register events
+            this.events.onKilled.add(this.onKilled, this);
+            this.events.onRevived.add(this.onRevived, this);
+        }
+        //When the coin is revived starts at begining position and play the animation
+        Coin.prototype.onRevived = function () {
+            this.body.velocity.x = -400;
+            this.animations.play('spin', 10, true);
+        };
+
+        //When coin is killed starts to the first frame animation
+        Coin.prototype.onKilled = function () {
+            this.animations.frame = 0;
+        };
+        return Coin;
+    })(Phaser.Sprite);
+    Runner.Coin = Coin;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var Enemy = (function (_super) {
+        __extends(Enemy, _super);
+        function Enemy(game, x, y, key, frame) {
+            _super.call(this, game, x, y, "missile", frame);
+
+            //Setup the coins
+            this.scale.setTo(0.1);
+            this.anchor.setTo(0.5);
+
+            //If we dont specify the array assumes all the frames
+            this.animations.add('fly');
+
+            this.game.physics.arcade.enableBody(this);
+            this.body.allowGravity = false;
+
+            //Check if the coin is out of the screen
+            this.checkWorldBounds = true;
+
+            //If coins is out of the screen then kill the coin
+            this.outOfBoundsKill = true;
+
+            //Register events
+            this.events.onRevived.add(this.onRevived, this);
+        }
+        //When the coin is revived starts at begining position and play the animation
+        Enemy.prototype.onRevived = function () {
+            this.body.velocity.x = -400;
+            this.animations.play('fly', 10, true);
+        };
+        return Enemy;
+    })(Phaser.Sprite);
+    Runner.Enemy = Enemy;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var PhaserRunner = (function (_super) {
+        __extends(PhaserRunner, _super);
+        function PhaserRunner() {
+            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+            this.state.add("Game", Runner.Game);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return PhaserRunner;
+    })(Phaser.Game);
+    Runner.PhaserRunner = PhaserRunner;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
     //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
     var Boot = (function (_super) {
         __extends(Boot, _super);
@@ -70,6 +165,11 @@ var Runner;
             this.backgroundVelocity = -100;
             this.playerMinAngle = -15;
             this.playerMaxAngle = 15;
+            this.coinRate = 1000; //1 second
+            this.coinTimer = 0;
+
+            this.enemyRate = 500; //1 second
+            this.enemyTimer = 0;
         }
         Game.prototype.create = function () {
             this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
@@ -102,6 +202,9 @@ var Runner;
             //Add physics to player and collideworldbounds (not exit from screen)
             this.game.physics.arcade.enableBody(this.player);
             this.player.body.collideWorldBounds = true;
+
+            this.coins = this.game.add.group();
+            this.enemies = this.game.add.group();
         };
 
         Game.prototype.update = function () {
@@ -124,12 +227,62 @@ var Runner;
                 }
             }
 
+            //Create a coin each second
+            if (this.coinTimer < this.game.time.now) {
+                this.createCoin();
+                this.coinTimer = this.game.time.now + this.coinRate;
+            }
+
+            //Create a enemy each 500 miliseconds
+            if (this.enemyTimer < this.game.time.now) {
+                this.createEnemy();
+                this.enemyTimer = this.game.time.now + this.enemyRate;
+            }
+
             //Checking if the player collides with the ground
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
         };
 
         Game.prototype.groundHit = function (player, ground) {
             player.body.velocity.y = -100;
+        };
+
+        Game.prototype.createCoin = function () {
+            var x = this.game.width;
+            var y = this.game.rnd.integerInRange(50, this.game.world.height - 192);
+
+            //Get the first coin with property exists == parameter value in this case (false)
+            var coin = this.coins.getFirstExists(false);
+
+            //Get the first dead coin
+            //var coin = this.coins.getFirstDead();
+            //If not exists any enemy then create a new coin else reuse a dead coin
+            if (!coin) {
+                coin = new Runner.Coin(this.game, 0, 0);
+                this.coins.add(coin);
+            }
+
+            coin.reset(x, y);
+            coin.revive();
+        };
+
+        Game.prototype.createEnemy = function () {
+            var x = this.game.width;
+            var y = this.game.rnd.integerInRange(50, this.game.world.height - 192);
+
+            //Get the first coin with property exists == parameter value in this case (false)
+            var enemy = this.coins.getFirstExists(false);
+
+            //Get the first dead coin
+            //var enemy = this.enemies.getFirstDead();
+            //If not exists any coin then create a new enemy else reuse a dead enemy
+            if (!enemy) {
+                enemy = new Runner.Enemy(this.game, 0, 0);
+                this.enemies.add(enemy);
+            }
+
+            enemy.reset(x, y);
+            enemy.revive();
         };
         return Game;
     })(Phaser.State);
@@ -246,25 +399,5 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
-    var PhaserRunner = (function (_super) {
-        __extends(PhaserRunner, _super);
-        function PhaserRunner() {
-            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-            this.state.add("MainMenu", Runner.MainMenu);
-            this.state.add("Game", Runner.Game);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return PhaserRunner;
-    })(Phaser.Game);
-    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map

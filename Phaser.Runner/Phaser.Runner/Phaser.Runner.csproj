@@ -55,6 +55,8 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="App.ts" />
+    <TypeScriptCompile Include="game\prefabs\Coin.ts" />
+    <TypeScriptCompile Include="game\prefabs\Enemy.ts" />
     <TypeScriptCompile Include="PhaserRunner.ts" />
     <TypeScriptCompile Include="game\states\Boot.ts" />
     <TypeScriptCompile Include="game\states\Game.ts" />
