@@ -18,6 +18,8 @@
         private enemyRate: number;
         private enemyTimer: number;
 
+        private score: number;
+        private scoreText: Phaser.BitmapText;
 
         constructor() {
             super();
@@ -27,8 +29,10 @@
             this.coinRate = 1000; //1 second
             this.coinTimer = 0;
 
-            this.enemyRate = 500; //1 second
+            this.enemyRate = 500; //500 miliseconds
             this.enemyTimer = 0;
+
+            this.score = 0;
         }
 
 
@@ -68,6 +72,9 @@
 
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
+
+
+            this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
         }
 
 
@@ -106,10 +113,26 @@
 
             //Checking if the player collides with the ground
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
+            
+            this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
+            this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
         }
 
+        //When player collides de floor move up 100px
         private groundHit(player, ground) {
             player.body.velocity.y = -100;
+        }
+
+        //When player overlap the coin
+        private coinHit(player: Phaser.Sprite, coin: Coin) {
+            this.score++;
+            coin.kill();
+            this.scoreText.text = 'Score: ' + this.score;
+        }
+
+        //When player overlap with an enemy
+        private enemyHit(player: Phaser.Sprite, enemy: Enemy) {
+         
         }
 
         private createCoin() {

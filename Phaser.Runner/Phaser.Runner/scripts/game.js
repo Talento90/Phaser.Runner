@@ -84,26 +84,6 @@ var Runner;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
-    var PhaserRunner = (function (_super) {
-        __extends(PhaserRunner, _super);
-        function PhaserRunner() {
-            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-            this.state.add("MainMenu", Runner.MainMenu);
-            this.state.add("Game", Runner.Game);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return PhaserRunner;
-    })(Phaser.Game);
-    Runner.PhaserRunner = PhaserRunner;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
     //Game state it's to prepare the preload bar and configure the settings (game scale and inputs)
     var Boot = (function (_super) {
         __extends(Boot, _super);
@@ -168,8 +148,10 @@ var Runner;
             this.coinRate = 1000; //1 second
             this.coinTimer = 0;
 
-            this.enemyRate = 500; //1 second
+            this.enemyRate = 500; //500 miliseconds
             this.enemyTimer = 0;
+
+            this.score = 0;
         }
         Game.prototype.create = function () {
             this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
@@ -205,6 +187,8 @@ var Runner;
 
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
+
+            this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
         };
 
         Game.prototype.update = function () {
@@ -241,10 +225,24 @@ var Runner;
 
             //Checking if the player collides with the ground
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
+            this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
+            this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
         };
 
+        //When player collides de floor move up 100px
         Game.prototype.groundHit = function (player, ground) {
             player.body.velocity.y = -100;
+        };
+
+        //When player overlap the coin
+        Game.prototype.coinHit = function (player, coin) {
+            this.score++;
+            coin.kill();
+            this.scoreText.text = 'Score: ' + this.score;
+        };
+
+        //When player overlap with an enemy
+        Game.prototype.enemyHit = function (player, enemy) {
         };
 
         Game.prototype.createCoin = function () {
@@ -399,5 +397,25 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var PhaserRunner = (function (_super) {
+        __extends(PhaserRunner, _super);
+        function PhaserRunner() {
+            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+            this.state.add("Game", Runner.Game);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return PhaserRunner;
+    })(Phaser.Game);
+    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map
