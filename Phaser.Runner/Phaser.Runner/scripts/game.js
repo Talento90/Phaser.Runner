@@ -75,12 +75,93 @@ var Runner;
         }
         //When the coin is revived starts at begining position and play the animation
         Enemy.prototype.onRevived = function () {
+            this.game.add.tween(this).to({ y: this.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
             this.body.velocity.x = -400;
             this.animations.play('fly', 10, true);
         };
         return Enemy;
     })(Phaser.Sprite);
     Runner.Enemy = Enemy;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var Scoreboard = (function (_super) {
+        __extends(Scoreboard, _super);
+        function Scoreboard(game) {
+            _super.call(this, game);
+        }
+        //Show the Scoreboard
+        Scoreboard.prototype.show = function (score) {
+            var bmd;
+            var background;
+            var gameoverText;
+            var scoreText;
+            var highScoreText;
+            var newHighScoreText;
+            var startText;
+
+            //Create a new area to draw (BitMapData)
+            bmd = this.game.add.bitmapData(this.game.width, this.game.height);
+            bmd.ctx.fillStyle = '#000';
+            bmd.ctx.fillRect(0, 0, this.game.width, this.game.height);
+
+            //Create a new sprite with the new area to draw
+            background = this.game.add.sprite(0, 0, bmd);
+            background.alpha = 0.5;
+
+            this.add(background);
+
+            //Check if a new high score and if Yes store in local storage
+            var isNewHighScore = false;
+            var highscore = localStorage.getItem('highscore');
+            if (!highscore || highscore < score) {
+                isNewHighScore = true;
+                highscore = score;
+                localStorage.setItem('highscore', highscore);
+            }
+
+            //Hide the score board (go to the bottom to show later)
+            this.y = this.game.height;
+
+            gameoverText = this.game.add.bitmapText(0, 100, 'minecraftia', 'You Died.', 36);
+            gameoverText.x = this.game.width / 2 - (gameoverText.textWidth / 2);
+            this.add(gameoverText);
+
+            scoreText = this.game.add.bitmapText(0, 200, 'minecraftia', 'Your Score: ' + score, 24);
+            scoreText.x = this.game.width / 2 - (scoreText.textWidth / 2);
+            this.add(scoreText);
+
+            highScoreText = this.game.add.bitmapText(0, 250, 'minecraftia', 'Your High Score: ' + highscore, 24);
+            highScoreText.x = this.game.width / 2 - (highScoreText.textWidth / 2);
+            this.add(highScoreText);
+
+            startText = this.game.add.bitmapText(0, 300, 'minecraftia', 'Tap to play again!', 16);
+            startText.x = this.game.width / 2 - (startText.textWidth / 2);
+            this.add(startText);
+
+            if (isNewHighScore) {
+                newHighScoreText = this.game.add.bitmapText(0, 100, 'minecraftia', 'New High Score!', 12);
+                newHighScoreText.tint = 0x4ebef7; // '#4ebef7'
+                newHighScoreText.x = gameoverText.x + gameoverText.textWidth + 40;
+                newHighScoreText.angle = 45;
+                this.add(newHighScoreText);
+            }
+
+            //Add animation to scoreboard to enter in the screen
+            this.game.add.tween(this).to({ y: 0 }, 1000, Phaser.Easing.Bounce.Out, true);
+
+            //If some input is down then start a new game
+            this.game.input.onDown.addOnce(this.restart, this);
+        };
+
+        //Restart the game
+        Scoreboard.prototype.restart = function () {
+            //Start the Game state
+            this.game.state.start('Game', true, false);
+        };
+        return Scoreboard;
+    })(Phaser.Group);
+    Runner.Scoreboard = Scoreboard;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
@@ -225,6 +306,7 @@ var Runner;
 
             //Checking if the player collides with the ground
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
+
             this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
             this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
         };
@@ -243,6 +325,21 @@ var Runner;
 
         //When player overlap with an enemy
         Game.prototype.enemyHit = function (player, enemy) {
+            player.kill();
+            enemy.kill();
+
+            this.ground.stopScroll();
+            this.background.stopScroll();
+            this.foreground.stopScroll();
+
+            this.enemies.setAll('body.velocity.x', 0);
+            this.coins.setAll('body.velocity.x', 0);
+
+            this.enemyTimer = Number.MAX_VALUE;
+            this.coinTimer = Number.MAX_VALUE;
+
+            var scoreboard = new Runner.Scoreboard(this.game);
+            scoreboard.show(this.score);
         };
 
         Game.prototype.createCoin = function () {
@@ -281,6 +378,15 @@ var Runner;
 
             enemy.reset(x, y);
             enemy.revive();
+        };
+
+        Game.prototype.shutdown = function () {
+            //Clean and Dispose all resources
+            this.coins.destroy();
+            this.enemies.destroy();
+            this.score = 0;
+            this.coinTimer = 0;
+            this.enemyTimer = 0;
         };
         return Game;
     })(Phaser.State);

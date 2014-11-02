@@ -26,6 +26,7 @@
 
         //When the coin is revived starts at begining position and play the animation
         private onRevived() {
+            this.game.add.tween(this).to({ y: this.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
             this.body.velocity.x = -400;
             this.animations.play('fly', 10, true);
         }

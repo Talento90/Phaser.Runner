@@ -132,7 +132,21 @@
 
         //When player overlap with an enemy
         private enemyHit(player: Phaser.Sprite, enemy: Enemy) {
-         
+            player.kill();
+            enemy.kill();
+
+            this.ground.stopScroll();
+            this.background.stopScroll();
+            this.foreground.stopScroll();
+
+            this.enemies.setAll('body.velocity.x', 0);
+            this.coins.setAll('body.velocity.x', 0);
+
+            this.enemyTimer = Number.MAX_VALUE;
+            this.coinTimer = Number.MAX_VALUE;
+
+            var scoreboard = new Scoreboard(this.game);
+            scoreboard.show(this.score);
         }
 
         private createCoin() {
@@ -172,6 +186,16 @@
             enemy.reset(x, y);
             enemy.revive();
         }
+
+        public shutdown() {
+            //Clean and Dispose all resources
+            this.coins.destroy();
+            this.enemies.destroy();
+            this.score = 0;
+            this.coinTimer = 0;
+            this.enemyTimer = 0;
+        }
+
     }
 }
 
