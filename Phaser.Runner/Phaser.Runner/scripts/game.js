@@ -494,7 +494,7 @@ var Runner;
             //Some browers dont play mp3 and play ogg so phaser will take care of browser support
             this.load.audio('gameMusic', ['assets/audio/Pamgaea.mp3', 'assets/audio/Pamgaea.ogg']);
 
-            //All browsers support .wav
+            //All browsers support .wav (EI dont :()
             this.load.audio('rocket', 'assets/audio/rocket.wav');
             this.load.audio('bounce', 'assets/audio/bounce.wav');
             this.load.audio('coin', 'assets/audio/coin.wav');
