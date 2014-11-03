@@ -37,10 +37,10 @@
             this.load.audio('gameMusic', ['assets/audio/Pamgaea.mp3', 'assets/audio/Pamgaea.ogg']);
 
             //All browsers support .wav
-            this.load.audio('rocket', 'assets/audio/rocket.wav');
-            this.load.audio('bounce', 'assets/audio/bounce.wav');
-            this.load.audio('coin', 'assets/audio/coin.wav');
-            this.load.audio('death', 'assets/audio/death.wav');
+            this.load.audio('rocket', 'assets/audio/rocket.wav', true);
+            this.load.audio('bounce', 'assets/audio/bounce.wav', true);
+            this.load.audio('coin', 'assets/audio/coin.wav', true);
+            this.load.audio('death', 'assets/audio/death.wav', true);
 
             //Loading fonts
             this.load.bitmapFont('minecraftia', 'assets/fonts/minecraftia/minecraftia.png', 'assets/fonts/minecraftia/minecraftia.xml');

@@ -270,12 +270,24 @@ var Runner;
             this.enemies = this.game.add.group();
 
             this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
+
+            //Sounds
+            this.jetSound = this.game.add.audio('rocket');
+            this.coinSound = this.game.add.audio('coin');
+            this.deathSound = this.game.add.audio('death');
+            this.gameMusic = this.game.add.audio('gameMusic');
+            this.gameMusic.play("", 0, 0.5, true);
         };
 
         Game.prototype.update = function () {
             //Id tap or mouse click then player up
             if (this.game.input.activePointer.isDown) {
                 this.player.body.velocity.y -= 25;
+
+                if (!this.jetSound.isPlaying)
+                    this.jetSound.play('', 0, 0.5, true);
+            } else {
+                this.jetSound.stop();
             }
 
             //Change player angle
@@ -319,6 +331,7 @@ var Runner;
         //When player overlap the coin
         Game.prototype.coinHit = function (player, coin) {
             this.score++;
+            this.coinSound.play();
             coin.kill();
             this.scoreText.text = 'Score: ' + this.score;
         };
@@ -327,6 +340,9 @@ var Runner;
         Game.prototype.enemyHit = function (player, enemy) {
             player.kill();
             enemy.kill();
+
+            this.deathSound.play();
+            this.gameMusic.stop();
 
             this.ground.stopScroll();
             this.background.stopScroll();
@@ -380,6 +396,7 @@ var Runner;
             enemy.revive();
         };
 
+        //Close this state
         Game.prototype.shutdown = function () {
             //Clean and Dispose all resources
             this.coins.destroy();

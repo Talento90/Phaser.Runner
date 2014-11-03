@@ -21,6 +21,11 @@
         private score: number;
         private scoreText: Phaser.BitmapText;
 
+        private jetSound: Phaser.Sound;
+        private coinSound: Phaser.Sound;
+        private deathSound: Phaser.Sound;
+        private gameMusic: Phaser.Sound;
+
         constructor() {
             super();
             this.backgroundVelocity = -100;
@@ -73,8 +78,14 @@
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
 
-
             this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
+
+            //Sounds
+            this.jetSound = this.game.add.audio('rocket');
+            this.coinSound = this.game.add.audio('coin');
+            this.deathSound = this.game.add.audio('death');
+            this.gameMusic = this.game.add.audio('gameMusic');
+            this.gameMusic.play("", 0, 0.5, true);
         }
 
 
@@ -82,6 +93,12 @@
             //Id tap or mouse click then player up 
             if (this.game.input.activePointer.isDown) {
                 this.player.body.velocity.y -= 25;
+
+                if (!this.jetSound.isPlaying) 
+                    this.jetSound.play('', 0, 0.5, true);
+                
+            } else {
+                this.jetSound.stop();
             }
 
             //Change player angle
@@ -113,7 +130,7 @@
 
             //Checking if the player collides with the ground
             this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
-            
+
             this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
             this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
         }
@@ -126,6 +143,7 @@
         //When player overlap the coin
         private coinHit(player: Phaser.Sprite, coin: Coin) {
             this.score++;
+            this.coinSound.play();
             coin.kill();
             this.scoreText.text = 'Score: ' + this.score;
         }
@@ -134,6 +152,9 @@
         private enemyHit(player: Phaser.Sprite, enemy: Enemy) {
             player.kill();
             enemy.kill();
+
+            this.deathSound.play();
+            this.gameMusic.stop();
 
             this.ground.stopScroll();
             this.background.stopScroll();
@@ -163,7 +184,7 @@
                 coin = new Coin(this.game, 0, 0);
                 this.coins.add(coin);
             }
-          
+
             coin.reset(x, y);
             coin.revive();
         }
@@ -182,11 +203,12 @@
                 enemy = new Enemy(this.game, 0, 0);
                 this.enemies.add(enemy);
             }
-          
+
             enemy.reset(x, y);
             enemy.revive();
         }
 
+        //Close this state
         public shutdown() {
             //Clean and Dispose all resources
             this.coins.destroy();
