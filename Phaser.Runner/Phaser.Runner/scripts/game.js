@@ -144,6 +144,7 @@ var Runner;
                 newHighScoreText.tint = 0x4ebef7; // '#4ebef7'
                 newHighScoreText.x = gameoverText.x + gameoverText.textWidth + 40;
                 newHighScoreText.angle = 45;
+                this.game.add.tween(newHighScoreText.scale).to({ x: 2, y: 2 }, 500, Phaser.Easing.Back.Out, true, 0, Infinity, true);
                 this.add(newHighScoreText);
             }
 
@@ -223,18 +224,19 @@ var Runner;
         __extends(Game, _super);
         function Game() {
             _super.call(this);
+            this.previousCoinType = null;
+            this.coinSpacingX = 10;
+            this.coinSpacingY = 10;
+            this.spawnX = null;
             this.backgroundVelocity = -100;
             this.playerMinAngle = -15;
             this.playerMaxAngle = 15;
-            this.coinRate = 1000; //1 second
-            this.coinTimer = 0;
-
-            this.enemyRate = 500; //500 miliseconds
-            this.enemyTimer = 0;
-
             this.score = 0;
         }
         Game.prototype.create = function () {
+            // set up the game world bounds It's bigger width because we whant to generate coin groups
+            this.game.world.bounds = new Phaser.Rectangle(0, 0, this.game.width + 300, this.game.height);
+
             this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
             this.background.autoScroll(-100, 0);
 
@@ -266,66 +268,81 @@ var Runner;
             this.game.physics.arcade.enableBody(this.player);
             this.player.body.collideWorldBounds = true;
 
+            //Init Groups
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
 
             this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
 
+            // create shadow
+            this.shadow = this.game.add.sprite(this.player.x, this.game.world.height - 73, 'shadow');
+            this.shadow.anchor.setTo(0.5, 0.5);
+
+            this.scoreboard = new Runner.Scoreboard(this.game);
+
             //Sounds
             this.jetSound = this.game.add.audio('rocket');
             this.coinSound = this.game.add.audio('coin');
             this.deathSound = this.game.add.audio('death');
+            this.bounceSound = this.game.add.audio('bounce');
             this.gameMusic = this.game.add.audio('gameMusic');
             this.gameMusic.play("", 0, 0.5, true);
+
+            // create an enemy spawn loop
+            this.enemyGenerator = this.game.time.events.loop(Phaser.Timer.SECOND, this.createEnemy, this);
+            this.enemyGenerator.timer.start();
+
+            // create a coin spawn loop
+            this.coinGenerator = this.game.time.events.loop(Phaser.Timer.SECOND, this.generateCoins, this);
+            this.coinGenerator.timer.start();
+            this.spawnX = this.game.width + 64;
         };
 
         Game.prototype.update = function () {
-            //Id tap or mouse click then player up
-            if (this.game.input.activePointer.isDown) {
-                this.player.body.velocity.y -= 25;
+            if (this.player.alive) {
+                if (this.game.input.activePointer.isDown) {
+                    this.player.body.velocity.y -= 25;
+                    if (!this.jetSound.isPlaying) {
+                        this.jetSound.play('', 0, 0.5, true);
+                    }
+                    this.player.animations.play('fly', 16);
+                } else {
+                    this.jetSound.stop();
+                }
 
-                if (!this.jetSound.isPlaying)
-                    this.jetSound.play('', 0, 0.5, true);
+                //Change player angle
+                if (this.player.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
+                    if (this.player.angle > 0) {
+                        this.player.angle = 0;
+                    }
+                    if (this.player.angle > this.playerMinAngle) {
+                        this.player.angle -= 0.5;
+                    }
+                }
+
+                if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
+                    if (this.player.angle < this.playerMaxAngle) {
+                        this.player.angle += 0.5;
+                    }
+                }
+
+                //Scale de shadow by playr distance from the floor
+                this.shadow.scale.setTo(this.player.y / this.game.height);
+
+                //Checking if the player collides with the ground
+                this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
+                this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
+                this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
             } else {
-                this.jetSound.stop();
+                this.game.physics.arcade.collide(this.player, this.ground);
             }
-
-            //Change player angle
-            if (this.player.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
-                if (this.player.angle > 0) {
-                    this.player.angle = 0;
-                }
-                if (this.player.angle > this.playerMinAngle) {
-                    this.player.angle -= 0.5;
-                }
-            } else if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
-                if (this.player.angle < this.playerMaxAngle) {
-                    this.player.angle += 0.5;
-                }
-            }
-
-            //Create a coin each second
-            if (this.coinTimer < this.game.time.now) {
-                this.createCoin();
-                this.coinTimer = this.game.time.now + this.coinRate;
-            }
-
-            //Create a enemy each 500 miliseconds
-            if (this.enemyTimer < this.game.time.now) {
-                this.createEnemy();
-                this.enemyTimer = this.game.time.now + this.enemyRate;
-            }
-
-            //Checking if the player collides with the ground
-            this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
-
-            this.game.physics.arcade.overlap(this.player, this.coins, this.coinHit, null, this);
-            this.game.physics.arcade.overlap(this.player, this.enemies, this.enemyHit, null, this);
         };
 
         //When player collides de floor move up 100px
         Game.prototype.groundHit = function (player, ground) {
-            player.body.velocity.y = -100;
+            this.player.angle = 0;
+            this.player.body.velocity.y = -100;
+            this.bounceSound.play();
         };
 
         //When player overlap the coin
@@ -333,13 +350,115 @@ var Runner;
             this.score++;
             this.coinSound.play();
             coin.kill();
-            this.scoreText.text = 'Score: ' + this.score;
+
+            var dummyCoin = new Runner.Coin(this.game, coin.x, coin.y);
+            this.game.add.existing(dummyCoin);
+
+            dummyCoin.animations.play('spin', 40, true);
+
+            var scoreTween = this.game.add.tween(dummyCoin).to({ x: 50, y: 50 }, 300, Phaser.Easing.Linear.None, true);
+
+            scoreTween.onComplete.add(function () {
+                dummyCoin.destroy();
+                this.scoreText.text = 'Score: ' + this.score;
+            }, this);
+        };
+
+        Game.prototype.createCoin = function (x, y) {
+            x = x || this.spawnX;
+            y = y || this.game.rnd.integerInRange(50, this.game.world.height - 192);
+
+            // recycle our coins
+            //Get the first dead coin
+            var coin = this.coins.getFirstDead();
+
+            if (!coin) {
+                coin = new Runner.Coin(this.game, 0, 0);
+                this.coins.add(coin);
+            }
+
+            coin.reset(x, y);
+            coin.revive();
+            return coin;
+        };
+
+        Game.prototype.createCoinGroup = function (columns, rows) {
+            //create 4 coins in a group
+            var coinSpawnY = this.game.rnd.integerInRange(50, this.game.world.height - 192);
+            var coinRowCounter = 0;
+            var coinColumnCounter = 0;
+            var coin;
+            for (var i = 0; i < columns * rows; i++) {
+                coin = this.createCoin(this.spawnX, coinSpawnY);
+                coin.x = coin.x + (coinColumnCounter * coin.width) + (coinColumnCounter * this.coinSpacingX);
+                coin.y = coinSpawnY + (coinRowCounter * coin.height) + (coinRowCounter * this.coinSpacingY);
+                coinColumnCounter++;
+                if (i + 1 >= columns && (i + 1) % columns === 0) {
+                    coinRowCounter++;
+                    coinColumnCounter = 0;
+                }
+            }
+        };
+
+        Game.prototype.generateCoins = function () {
+            if (!this.previousCoinType || this.previousCoinType < 3) {
+                var coinType = this.game.rnd.integer() % 5;
+                switch (coinType) {
+                    case 0:
+                        break;
+                    case 1:
+                    case 2:
+                        // if the cointype is 1 or 2, create a single coin
+                        this.createCoin();
+                        break;
+                    case 3:
+                        // create a small group of coins
+                        this.createCoinGroup(2, 2);
+                        break;
+                    case 4:
+                        //create a large coin group
+                        this.createCoinGroup(6, 2);
+                        break;
+                    default:
+                        // if somehow we error on the cointype, set the previouscointype to zero and do nothing
+                        this.previousCoinType = 0;
+                        break;
+                }
+
+                this.previousCoinType = coinType;
+            } else {
+                if (this.previousCoinType === 4) {
+                    // the previous coin generated was a large group,
+                    // skip the next generation as well
+                    this.previousCoinType = 3;
+                } else {
+                    this.previousCoinType = 0;
+                }
+            }
+        };
+
+        Game.prototype.createEnemy = function () {
+            var x = this.game.width;
+            var y = this.game.rnd.integerInRange(50, this.game.world.height - 192);
+
+            //Get the first dead coin
+            var enemy = this.enemies.getFirstDead();
+
+            //If not exists any coin then create a new enemy else reuse a dead enemy
+            if (!enemy) {
+                console.log("create new enemy");
+                enemy = new Runner.Enemy(this.game, 0, 0);
+                this.enemies.add(enemy);
+            }
+
+            enemy.reset(x, y);
+            enemy.revive();
         };
 
         //When player overlap with an enemy
         Game.prototype.enemyHit = function (player, enemy) {
-            player.kill();
-            enemy.kill();
+            this.player.alive = false;
+            this.player.animations.stop();
 
             this.deathSound.play();
             this.gameMusic.stop();
@@ -351,59 +470,29 @@ var Runner;
             this.enemies.setAll('body.velocity.x', 0);
             this.coins.setAll('body.velocity.x', 0);
 
-            this.enemyTimer = Number.MAX_VALUE;
-            this.coinTimer = Number.MAX_VALUE;
+            this.shadow.destroy();
+            this.enemyGenerator.timer.stop();
+            this.coinGenerator.timer.stop();
 
-            var scoreboard = new Runner.Scoreboard(this.game);
-            scoreboard.show(this.score);
+            var deathTween = this.game.add.tween(this.player).to({ angle: 180 }, 2000, Phaser.Easing.Bounce.Out, true);
+            deathTween.onComplete.add(this.showScoreboard, this);
         };
 
-        Game.prototype.createCoin = function () {
-            var x = this.game.width;
-            var y = this.game.rnd.integerInRange(50, this.game.world.height - 192);
-
-            //Get the first coin with property exists == parameter value in this case (false)
-            var coin = this.coins.getFirstExists(false);
-
-            //Get the first dead coin
-            //var coin = this.coins.getFirstDead();
-            //If not exists any enemy then create a new coin else reuse a dead coin
-            if (!coin) {
-                coin = new Runner.Coin(this.game, 0, 0);
-                this.coins.add(coin);
-            }
-
-            coin.reset(x, y);
-            coin.revive();
-        };
-
-        Game.prototype.createEnemy = function () {
-            var x = this.game.width;
-            var y = this.game.rnd.integerInRange(50, this.game.world.height - 192);
-
-            //Get the first coin with property exists == parameter value in this case (false)
-            var enemy = this.coins.getFirstExists(false);
-
-            //Get the first dead coin
-            //var enemy = this.enemies.getFirstDead();
-            //If not exists any coin then create a new enemy else reuse a dead enemy
-            if (!enemy) {
-                enemy = new Runner.Enemy(this.game, 0, 0);
-                this.enemies.add(enemy);
-            }
-
-            enemy.reset(x, y);
-            enemy.revive();
+        Game.prototype.showScoreboard = function () {
+            this.scoreboard.show(this.score);
         };
 
         //Close this state
         Game.prototype.shutdown = function () {
+            console.log('shutting down');
+
             //Clean and Dispose all resources
             this.coins.destroy();
             this.enemies.destroy();
             this.score = 0;
-            this.coinTimer = 0;
-            this.enemyTimer = 0;
+            this.scoreboard.destroy();
+            this.coinGenerator.timer.destroy();
+            this.enemyGenerator.timer.destroy();
         };
         return Game;
     })(Phaser.State);
@@ -485,6 +574,7 @@ var Runner;
             this.load.image('ground', 'assets/images/ground.png');
             this.load.image('background', 'assets/images/background.png');
             this.load.image('foreground', 'assets/images/foreground.png');
+            this.load.image('shadow', 'assets/images/shadow.png');
 
             //sprite animation (width, height, number of frames)
             this.load.spritesheet('coins', 'assets/images/coins-ps.png', 51, 51, 7);

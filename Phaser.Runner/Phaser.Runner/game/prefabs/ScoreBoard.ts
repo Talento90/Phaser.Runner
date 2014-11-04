@@ -61,6 +61,7 @@
                 newHighScoreText.tint = 0x4ebef7; // '#4ebef7'
                 newHighScoreText.x = gameoverText.x + gameoverText.textWidth + 40;
                 newHighScoreText.angle = 45;
+                this.game.add.tween(newHighScoreText.scale).to({ x: 2, y: 2 }, 500, Phaser.Easing.Back.Out, true, 0, Infinity, true);    
                 this.add(newHighScoreText);
             }
 
