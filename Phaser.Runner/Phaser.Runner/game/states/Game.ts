@@ -45,6 +45,9 @@
 
         public create() {
 
+            //For FPS
+            this.game.time.advancedTiming = true;
+
             // set up the game world bounds It's bigger width because we whant to generate coin groups
             this.game.world.bounds = new Phaser.Rectangle(0, 0, this.game.width + 300, this.game.height);
 
@@ -310,6 +313,11 @@
             this.scoreboard.destroy();
             this.coinGenerator.timer.destroy();
             this.enemyGenerator.timer.destroy();
+        }
+
+
+        public render() {
+            this.game.debug.text(this.game.time.fps.toString() || '--', 2, 14, "#00ff00");
         }
     }
 }

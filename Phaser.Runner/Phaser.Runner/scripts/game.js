@@ -193,8 +193,8 @@ var Runner;
                 //  Same goes for mobile settings.
                 //  In this case we're saying "scale the game, no lower than 480x260 and no higher than 1024x768"
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-                this.scale.minWidth = 568;
-                this.scale.minHeight = 600;
+                this.scale.minWidth = 480;
+                this.scale.minHeight = 260;
                 this.scale.maxWidth = 2048;
                 this.scale.maxHeight = 1536;
                 this.scale.forceLandscape = true;
@@ -234,6 +234,9 @@ var Runner;
             this.score = 0;
         }
         Game.prototype.create = function () {
+            //For FPS
+            this.game.time.advancedTiming = true;
+
             // set up the game world bounds It's bigger width because we whant to generate coin groups
             this.game.world.bounds = new Phaser.Rectangle(0, 0, this.game.width + 300, this.game.height);
 
@@ -493,6 +496,10 @@ var Runner;
             this.scoreboard.destroy();
             this.coinGenerator.timer.destroy();
             this.enemyGenerator.timer.destroy();
+        };
+
+        Game.prototype.render = function () {
+            this.game.debug.text(this.game.time.fps.toString() || '--', 2, 14, "#00ff00");
         };
         return Game;
     })(Phaser.State);

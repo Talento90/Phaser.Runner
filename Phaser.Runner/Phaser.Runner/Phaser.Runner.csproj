@@ -47,6 +47,7 @@
     <Content Include="assets\audio\Pamgaea.ogg" />
     <Content Include="scripts\game.js.map" />
     <Content Include="scripts\phaser.map" />
+    <None Include="PhaserRunner.pubxml" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
