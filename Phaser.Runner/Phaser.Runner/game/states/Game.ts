@@ -120,7 +120,7 @@
                 if (this.game.input.activePointer.isDown) {
                     this.player.body.velocity.y -= 25;
                     if (!this.jetSound.isPlaying) {
-                        this.jetSound.play('', 0, 0.5, true);
+                        this.jetSound.play('', 0, 0.5, false, true);
                     }
                     this.player.animations.play('fly', 16);
                 } else {

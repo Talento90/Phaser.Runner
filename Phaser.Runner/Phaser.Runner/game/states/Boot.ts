@@ -26,12 +26,7 @@
                 this.scale.pageAlignHorizontally = true;
             } else {
                 //  Same goes for mobile settings.
-                //  In this case we're saying "scale the game, no lower than 480x260 and no higher than 1024x768"
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-                this.scale.minWidth = 480;
-                this.scale.minHeight = 260;
-                this.scale.maxWidth = 2048;
-                this.scale.maxHeight = 1536;
                 this.scale.forceLandscape = true;
                 this.scale.pageAlignHorizontally = true;
                 this.scale.setScreenSize(true);
@@ -41,17 +36,6 @@
             //  So now let's start the real preloader going
             this.game.state.start('Preload');
         }
-
-        //Run in every tick (60fps +-)
-        public update() {
-
-        }
-
-        //
-        public shutdown() {
-
-        }
-
     }
 }
 

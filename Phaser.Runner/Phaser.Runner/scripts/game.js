@@ -76,7 +76,7 @@ var Runner;
         //When the coin is revived starts at begining position and play the animation
         Enemy.prototype.onRevived = function () {
             this.game.add.tween(this).to({ y: this.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
-            this.body.velocity.x = -400;
+            this.body.velocity.x = -600;
             this.animations.play('fly', 10, true);
         };
         return Enemy;
@@ -191,12 +191,7 @@ var Runner;
                 this.scale.pageAlignHorizontally = true;
             } else {
                 //  Same goes for mobile settings.
-                //  In this case we're saying "scale the game, no lower than 480x260 and no higher than 1024x768"
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-                this.scale.minWidth = 480;
-                this.scale.minHeight = 260;
-                this.scale.maxWidth = 2048;
-                this.scale.maxHeight = 1536;
                 this.scale.forceLandscape = true;
                 this.scale.pageAlignHorizontally = true;
                 this.scale.setScreenSize(true);
@@ -205,14 +200,6 @@ var Runner;
             //  By this point the preloader assets have loaded to the cache, we've set the game settings
             //  So now let's start the real preloader going
             this.game.state.start('Preload');
-        };
-
-        //Run in every tick (60fps +-)
-        Boot.prototype.update = function () {
-        };
-
-        //
-        Boot.prototype.shutdown = function () {
         };
         return Boot;
     })(Phaser.State);
@@ -306,7 +293,7 @@ var Runner;
                 if (this.game.input.activePointer.isDown) {
                     this.player.body.velocity.y -= 25;
                     if (!this.jetSound.isPlaying) {
-                        this.jetSound.play('', 0, 0.5, true);
+                        this.jetSound.play('', 0, 0.5, false, true);
                     }
                     this.player.animations.play('fly', 16);
                 } else {
@@ -623,7 +610,10 @@ var Runner;
     var PhaserRunner = (function (_super) {
         __extends(PhaserRunner, _super);
         function PhaserRunner() {
-            _super.call(this, innerWidth, innerHeight, Phaser.AUTO, '');
+            var width = window.innerWidth * window.devicePixelRatio;
+            var height = window.innerHeight * window.devicePixelRatio;
+
+            _super.call(this, width, height, Phaser.CANVAS, '');
 
             //Add Game States
             this.state.add("Boot", Runner.Boot);

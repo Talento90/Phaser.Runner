@@ -4,7 +4,10 @@
 
         constructor() {
 
-            super(innerWidth, innerHeight, Phaser.AUTO, '');
+            var width = window.innerWidth * window.devicePixelRatio;
+            var height = window.innerHeight * window.devicePixelRatio;
+
+            super(width, height, Phaser.CANVAS, '');
 
             //Add Game States
             this.state.add("Boot", Runner.Boot);
