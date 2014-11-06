@@ -2,6 +2,8 @@
 
     export class Enemy extends Phaser.Sprite {
 
+        private static Velocity: number = -600;
+
         constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: any) {
             super(game, x, y, "missile", frame);
 
@@ -27,7 +29,7 @@
         //When the coin is revived starts at begining position and play the animation
         private onRevived() {
             this.game.add.tween(this).to({ y: this.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
-            this.body.velocity.x = -600;
+            this.body.velocity.x = Enemy.Velocity;
             this.animations.play('fly', 10, true);
         }
     }

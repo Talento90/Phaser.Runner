@@ -2,6 +2,8 @@
 
     export class Coin extends Phaser.Sprite {
 
+        private static Velocity: number = -400;
+
         constructor(game: Phaser.Game, x: number, y: number, key?: string, frame?: any) {
             super(game, x, y, "coins", frame);
 
@@ -26,7 +28,7 @@
 
         //When the coin is revived starts at begining position and play the animation
         private onRevived() {
-            this.body.velocity.x = -400;
+            this.body.velocity.x = Coin.Velocity;
             this.animations.play('spin', 10, true);
         }
 

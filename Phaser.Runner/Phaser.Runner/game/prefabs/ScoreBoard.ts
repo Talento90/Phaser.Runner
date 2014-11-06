@@ -3,8 +3,7 @@
     export class Scoreboard extends Phaser.Group {
 
         constructor(game: Phaser.Game) {
-            super(game);
- 
+            super(game); 
         }
 
         //Show the Scoreboard
@@ -66,7 +65,7 @@
             }
 
             //Add animation to scoreboard to enter in the screen
-            this.game.add.tween(this).to({ y: 0 }, 1000, Phaser.Easing.Bounce.Out, true);
+            this.game.add.tween(this).to({ y: 0 }, this.game.height, Phaser.Easing.Bounce.Out, true);
 
             //If some input is down then start a new game
             this.game.input.onDown.addOnce(this.restart, this);

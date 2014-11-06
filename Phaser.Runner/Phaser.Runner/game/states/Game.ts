@@ -2,43 +2,37 @@
 
     export class Game extends Phaser.State {
 
+        private static BackgroundVelocity: number = -100;
+        private static PlayerMinAngle: number = -15;
+        private static PlayerMaxAngle: number = 15;
+        private static CoinSpacingX: number = 10;
+        private static CoinSpacingY: number = 10;
+
         private background: Phaser.TileSprite;
         private foreground: Phaser.TileSprite;
         private ground: Phaser.TileSprite;
-        private player: Phaser.Sprite;
-        private backgroundVelocity: number;
-        private playerMinAngle: number;
-        private playerMaxAngle: number;
+        private player: Player;
 
         private coins: Phaser.Group;
         private enemies: Phaser.Group;
+        private enemyGenerator: Phaser.TimerEvent;
+        private coinGenerator: Phaser.TimerEvent;
+
+        private previousCoinType: number = null;
+        private spawnX: number = null;
 
         private score: number;
         private scoreText: Phaser.BitmapText;
+        private scoreboard: Scoreboard;
 
-        private jetSound: Phaser.Sound;
         private coinSound: Phaser.Sound;
         private deathSound: Phaser.Sound;
         private gameMusic: Phaser.Sound;
         private bounceSound: Phaser.Sound;
         
-        private previousCoinType: number = null;
-        private coinSpacingX: number = 10;
-        private coinSpacingY: number = 10;
-
-        private spawnX: number = null;
-
-        private shadow: Phaser.Sprite;
-        private scoreboard: Scoreboard;
-
-        private enemyGenerator: Phaser.TimerEvent;
-        private coinGenerator: Phaser.TimerEvent;
-
         constructor() {
             super();
-            this.backgroundVelocity = -100;
-            this.playerMinAngle = -15;
-            this.playerMaxAngle = 15;
+       
             this.score = 0;
         }
 
@@ -60,13 +54,9 @@
             this.ground = this.game.add.tileSprite(0, this.game.height - 73, this.game.width, 73, 'ground');
             this.ground.autoScroll(-400, 0);
 
-            this.player = this.add.sprite(200, this.game.height / 2, 'player');
-            this.player.anchor.setTo(0.5);
-            this.player.scale.setTo(0.3);
-
-            this.player.animations.add('fly', [0, 1, 2, 3, 2, 1]);
-            this.player.animations.play('fly', 8, true);
-
+            
+            this.player = new Player(this.game, 200, this.game.height / 2);
+            this.game.add.existing(this.player);
 
             //Enable Physics.. Phaser have 3 physics engine... Arcade, ninja and other... Arcade is the simplest one
             this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -79,25 +69,14 @@
             this.ground.body.allowGravity = false;
             this.ground.body.immovable = true;
 
-            //Add physics to player and collideworldbounds (not exit from screen)
-            this.game.physics.arcade.enableBody(this.player);
-            this.player.body.collideWorldBounds = true;
-
             //Init Groups
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
 
-
             this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
-
-            // create shadow
-            this.shadow = this.game.add.sprite(this.player.x, this.game.world.height - 73, 'shadow');
-            this.shadow.anchor.setTo(0.5, 0.5);
-
             this.scoreboard = new Scoreboard(this.game);
 
             //Sounds
-            this.jetSound = this.game.add.audio('rocket');
             this.coinSound = this.game.add.audio('coin');
             this.deathSound = this.game.add.audio('death');
             this.bounceSound = this.game.add.audio('bounce');
@@ -117,14 +96,11 @@
         public update() {
 
             if (this.player.alive) {
+
                 if (this.game.input.activePointer.isDown) {
-                    this.player.body.velocity.y -= 25;
-                    if (!this.jetSound.isPlaying) {
-                        this.jetSound.play('', 0, 0.5, false, true);
-                    }
-                    this.player.animations.play('fly', 16);
+                    this.player.fly();
                 } else {
-                    this.jetSound.stop();
+                    this.player.stopFly();
                 }
 
                 //Change player angle
@@ -132,19 +108,19 @@
                     if (this.player.angle > 0) {
                         this.player.angle = 0;
                     }
-                    if (this.player.angle > this.playerMinAngle) {
+                    if (this.player.angle > Game.PlayerMinAngle) {
                         this.player.angle -= 0.5;
                     }
                 }
 
                 if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
 
-                    if (this.player.angle < this.playerMaxAngle) {
+                    if (this.player.angle < Game.PlayerMaxAngle) {
                         this.player.angle += 0.5;
                     }
                 }
-                //Scale de shadow by playr distance from the floor
-                this.shadow.scale.setTo(this.player.y / this.game.height);
+
+                this.player.updateShadow();
 
                 //Checking if the player collides with the ground
                 this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
@@ -209,8 +185,8 @@
             var coin;
             for (var i = 0; i < columns * rows; i++) {
                 coin = this.createCoin(this.spawnX, coinSpawnY);
-                coin.x = coin.x + (coinColumnCounter * coin.width) + (coinColumnCounter * this.coinSpacingX);
-                coin.y = coinSpawnY + (coinRowCounter * coin.height) + (coinRowCounter * this.coinSpacingY);
+                coin.x = coin.x + (coinColumnCounter * coin.width) + (coinColumnCounter * Game.CoinSpacingX);
+                coin.y = coinSpawnY + (coinRowCounter * coin.height) + (coinRowCounter * Game.CoinSpacingY);
                 coinColumnCounter++;
                 if (i + 1 >= columns && (i + 1) % columns === 0) {
                     coinRowCounter++;
@@ -291,7 +267,6 @@
             this.enemies.setAll('body.velocity.x', 0);
             this.coins.setAll('body.velocity.x', 0);
 
-            this.shadow.destroy();
             this.enemyGenerator.timer.stop();
             this.coinGenerator.timer.stop();
 
@@ -307,6 +282,7 @@
         public shutdown() {
             console.log('shutting down');
             //Clean and Dispose all resources
+            this.player.destroy();
             this.coins.destroy();
             this.enemies.destroy();
             this.score = 0;

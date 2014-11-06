@@ -35,7 +35,7 @@ var Runner;
         }
         //When the coin is revived starts at begining position and play the animation
         Coin.prototype.onRevived = function () {
-            this.body.velocity.x = -400;
+            this.body.velocity.x = Coin.Velocity;
             this.animations.play('spin', 10, true);
         };
 
@@ -43,6 +43,7 @@ var Runner;
         Coin.prototype.onKilled = function () {
             this.animations.frame = 0;
         };
+        Coin.Velocity = -400;
         return Coin;
     })(Phaser.Sprite);
     Runner.Coin = Coin;
@@ -76,12 +77,58 @@ var Runner;
         //When the coin is revived starts at begining position and play the animation
         Enemy.prototype.onRevived = function () {
             this.game.add.tween(this).to({ y: this.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
-            this.body.velocity.x = -600;
+            this.body.velocity.x = Enemy.Velocity;
             this.animations.play('fly', 10, true);
         };
+        Enemy.Velocity = -600;
         return Enemy;
     })(Phaser.Sprite);
     Runner.Enemy = Enemy;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var Player = (function (_super) {
+        __extends(Player, _super);
+        function Player(game, x, y, key, frame) {
+            _super.call(this, game, x, y, "player", frame);
+
+            this.anchor.setTo(0.5);
+            this.scale.setTo(0.3);
+            this.animations.add('fly', [0, 1, 2, 3, 2, 1]);
+            this.animations.play('fly', 8, true);
+
+            //Add physics to player and collideworldbounds (not exit from screen)
+            this.game.physics.arcade.enableBody(this);
+            this.body.collideWorldBounds = true;
+
+            // create shadow
+            this.shadow = this.game.add.sprite(this.x, this.game.world.height - 73, 'shadow');
+            this.shadow.anchor.setTo(0.5, 0.5);
+
+            this.jetSound = this.game.add.audio('rocket');
+        }
+        Player.prototype.fly = function () {
+            this.body.velocity.y -= Player.JumpHeigth;
+
+            if (!this.jetSound.isPlaying) {
+                this.jetSound.play('', 0, 0.5, false, true);
+            }
+
+            this.animations.play('fly', 16);
+        };
+
+        Player.prototype.stopFly = function () {
+            this.jetSound.stop();
+        };
+
+        Player.prototype.updateShadow = function () {
+            //Scale de shadow by playr distance from the floor
+            this.shadow.scale.setTo(this.y / this.game.height);
+        };
+        Player.JumpHeigth = 25;
+        return Player;
+    })(Phaser.Sprite);
+    Runner.Player = Player;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
@@ -149,7 +196,7 @@ var Runner;
             }
 
             //Add animation to scoreboard to enter in the screen
-            this.game.add.tween(this).to({ y: 0 }, 1000, Phaser.Easing.Bounce.Out, true);
+            this.game.add.tween(this).to({ y: 0 }, this.game.height, Phaser.Easing.Bounce.Out, true);
 
             //If some input is down then start a new game
             this.game.input.onDown.addOnce(this.restart, this);
@@ -163,6 +210,29 @@ var Runner;
         return Scoreboard;
     })(Phaser.Group);
     Runner.Scoreboard = Scoreboard;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var PhaserRunner = (function (_super) {
+        __extends(PhaserRunner, _super);
+        function PhaserRunner() {
+            var width = window.innerWidth * window.devicePixelRatio;
+            var height = window.innerHeight * window.devicePixelRatio;
+
+            _super.call(this, width, height, Phaser.CANVAS, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+            this.state.add("Game", Runner.Game);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return PhaserRunner;
+    })(Phaser.Game);
+    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
@@ -212,12 +282,8 @@ var Runner;
         function Game() {
             _super.call(this);
             this.previousCoinType = null;
-            this.coinSpacingX = 10;
-            this.coinSpacingY = 10;
             this.spawnX = null;
-            this.backgroundVelocity = -100;
-            this.playerMinAngle = -15;
-            this.playerMaxAngle = 15;
+
             this.score = 0;
         }
         Game.prototype.create = function () {
@@ -236,12 +302,8 @@ var Runner;
             this.ground = this.game.add.tileSprite(0, this.game.height - 73, this.game.width, 73, 'ground');
             this.ground.autoScroll(-400, 0);
 
-            this.player = this.add.sprite(200, this.game.height / 2, 'player');
-            this.player.anchor.setTo(0.5);
-            this.player.scale.setTo(0.3);
-
-            this.player.animations.add('fly', [0, 1, 2, 3, 2, 1]);
-            this.player.animations.play('fly', 8, true);
+            this.player = new Runner.Player(this.game, 200, this.game.height / 2);
+            this.game.add.existing(this.player);
 
             //Enable Physics.. Phaser have 3 physics engine... Arcade, ninja and other... Arcade is the simplest one
             this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -254,24 +316,14 @@ var Runner;
             this.ground.body.allowGravity = false;
             this.ground.body.immovable = true;
 
-            //Add physics to player and collideworldbounds (not exit from screen)
-            this.game.physics.arcade.enableBody(this.player);
-            this.player.body.collideWorldBounds = true;
-
             //Init Groups
             this.coins = this.game.add.group();
             this.enemies = this.game.add.group();
 
             this.scoreText = this.game.add.bitmapText(10, 10, 'minecraftia', 'Score: 0', 24);
-
-            // create shadow
-            this.shadow = this.game.add.sprite(this.player.x, this.game.world.height - 73, 'shadow');
-            this.shadow.anchor.setTo(0.5, 0.5);
-
             this.scoreboard = new Runner.Scoreboard(this.game);
 
             //Sounds
-            this.jetSound = this.game.add.audio('rocket');
             this.coinSound = this.game.add.audio('coin');
             this.deathSound = this.game.add.audio('death');
             this.bounceSound = this.game.add.audio('bounce');
@@ -291,13 +343,9 @@ var Runner;
         Game.prototype.update = function () {
             if (this.player.alive) {
                 if (this.game.input.activePointer.isDown) {
-                    this.player.body.velocity.y -= 25;
-                    if (!this.jetSound.isPlaying) {
-                        this.jetSound.play('', 0, 0.5, false, true);
-                    }
-                    this.player.animations.play('fly', 16);
+                    this.player.fly();
                 } else {
-                    this.jetSound.stop();
+                    this.player.stopFly();
                 }
 
                 //Change player angle
@@ -305,19 +353,18 @@ var Runner;
                     if (this.player.angle > 0) {
                         this.player.angle = 0;
                     }
-                    if (this.player.angle > this.playerMinAngle) {
+                    if (this.player.angle > Game.PlayerMinAngle) {
                         this.player.angle -= 0.5;
                     }
                 }
 
                 if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
-                    if (this.player.angle < this.playerMaxAngle) {
+                    if (this.player.angle < Game.PlayerMaxAngle) {
                         this.player.angle += 0.5;
                     }
                 }
 
-                //Scale de shadow by playr distance from the floor
-                this.shadow.scale.setTo(this.player.y / this.game.height);
+                this.player.updateShadow();
 
                 //Checking if the player collides with the ground
                 this.game.physics.arcade.collide(this.player, this.ground, this.groundHit, null, this);
@@ -380,8 +427,8 @@ var Runner;
             var coin;
             for (var i = 0; i < columns * rows; i++) {
                 coin = this.createCoin(this.spawnX, coinSpawnY);
-                coin.x = coin.x + (coinColumnCounter * coin.width) + (coinColumnCounter * this.coinSpacingX);
-                coin.y = coinSpawnY + (coinRowCounter * coin.height) + (coinRowCounter * this.coinSpacingY);
+                coin.x = coin.x + (coinColumnCounter * coin.width) + (coinColumnCounter * Game.CoinSpacingX);
+                coin.y = coinSpawnY + (coinRowCounter * coin.height) + (coinRowCounter * Game.CoinSpacingY);
                 coinColumnCounter++;
                 if (i + 1 >= columns && (i + 1) % columns === 0) {
                     coinRowCounter++;
@@ -460,7 +507,6 @@ var Runner;
             this.enemies.setAll('body.velocity.x', 0);
             this.coins.setAll('body.velocity.x', 0);
 
-            this.shadow.destroy();
             this.enemyGenerator.timer.stop();
             this.coinGenerator.timer.stop();
 
@@ -477,6 +523,7 @@ var Runner;
             console.log('shutting down');
 
             //Clean and Dispose all resources
+            this.player.destroy();
             this.coins.destroy();
             this.enemies.destroy();
             this.score = 0;
@@ -488,6 +535,11 @@ var Runner;
         Game.prototype.render = function () {
             this.game.debug.text(this.game.time.fps.toString() || '--', 2, 14, "#00ff00");
         };
+        Game.BackgroundVelocity = -100;
+        Game.PlayerMinAngle = -15;
+        Game.PlayerMaxAngle = 15;
+        Game.CoinSpacingX = 10;
+        Game.CoinSpacingY = 10;
         return Game;
     })(Phaser.State);
     Runner.Game = Game;
@@ -498,30 +550,21 @@ var Runner;
         __extends(MainMenu, _super);
         function MainMenu() {
             _super.call(this);
-            this.backgroundVelocity = -100;
-            this.floorVelocity = -400;
         }
         MainMenu.prototype.create = function () {
             //Paralax effect - floor is faster than the back and foreground
             //TileSprite are Tiles (azuleijos) so then just reapeat...
             this.background = this.game.add.tileSprite(0, 0, this.game.width, 512, 'background');
-            this.background.autoScroll(this.backgroundVelocity, 0);
+            this.background.autoScroll(MainMenu.BackgroundVelocity, 0);
 
             this.foreground = this.game.add.tileSprite(0, 470, this.game.width, this.game.height - 533, 'foreground');
-            this.foreground.autoScroll(this.backgroundVelocity, 0);
+            this.foreground.autoScroll(MainMenu.BackgroundVelocity, 0);
 
             this.ground = this.game.add.tileSprite(0, this.game.height - 73, this.game.width, 73, 'ground');
-            this.ground.autoScroll(this.floorVelocity, 0);
+            this.ground.autoScroll(MainMenu.FloorVelocity, 0);
 
-            this.player = this.add.sprite(200, this.game.height / 2, 'player');
-            this.player.anchor.setTo(0.5);
-            this.player.scale.setTo(0.3); //Scale the player sprite to 30%
-
-            //Add animation to player by sprite frame order
-            this.player.animations.add('fly', [0, 1, 2, 3, 2, 1]);
-
-            //8 Frame rate and loop!
-            this.player.animations.play('fly', 8, true);
+            this.player = new Runner.Player(this.game, 200, this.game.height / 2);
+            this.game.add.existing(this.player);
 
             // Add Tween (Between) Bouncing animation player up and down (yo yo)
             this.game.add.tween(this.player).to({ y: this.player.y - 16 }, 500, Phaser.Easing.Linear.None, true, 0, Infinity, true);
@@ -536,11 +579,15 @@ var Runner;
         };
 
         MainMenu.prototype.update = function () {
+            this.player.updateShadow();
+
             //If Pressed then start the game (Active pointer can be mouse ou tap)
             if (this.game.input.activePointer.justPressed()) {
                 this.game.state.start('Game');
             }
         };
+        MainMenu.BackgroundVelocity = -100;
+        MainMenu.FloorVelocity = -400;
         return MainMenu;
     })(Phaser.State);
     Runner.MainMenu = MainMenu;
@@ -604,28 +651,5 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
-    var PhaserRunner = (function (_super) {
-        __extends(PhaserRunner, _super);
-        function PhaserRunner() {
-            var width = window.innerWidth * window.devicePixelRatio;
-            var height = window.innerHeight * window.devicePixelRatio;
-
-            _super.call(this, width, height, Phaser.CANVAS, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-            this.state.add("MainMenu", Runner.MainMenu);
-            this.state.add("Game", Runner.Game);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return PhaserRunner;
-    })(Phaser.Game);
-    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map
