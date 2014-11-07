@@ -3,6 +3,8 @@
     export class Player extends Phaser.Sprite {
 
         private static JumpHeigth: number = 25;
+        private static PlayerMinAngle: number = -15;
+        private static PlayerMaxAngle: number = 15;
 
         private jetSound: Phaser.Sound;
         private shadow: Phaser.Sprite;
@@ -11,7 +13,7 @@
             super(game, x, y, "player", frame);
 
             this.anchor.setTo(0.5);
-            this.scale.setTo(0.3);
+            this.scale.setTo(0.25);
             this.animations.add('fly', [0, 1, 2, 3, 2, 1]);
             this.animations.play('fly', 8, true);
 
@@ -25,7 +27,6 @@
 
             this.jetSound = this.game.add.audio('rocket');       
         }
-
 
         public fly(): void {
             this.body.velocity.y -= Player.JumpHeigth;
@@ -41,11 +42,29 @@
             this.jetSound.stop();
         }
 
+        public updateAngle(): void {
+
+            //Change player angle
+            if (this.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
+                if (this.angle > 0) {
+                    this.angle = 0;
+                }
+                if (this.angle > Player.PlayerMinAngle) {
+                    this.angle -= 0.5;
+                }
+            }
+
+            if (this.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
+
+                if (this.angle < Player.PlayerMaxAngle) {
+                    this.angle += 0.5;
+                }
+            }      
+        }
+
         public updateShadow(): void {
             //Scale de shadow by playr distance from the floor
             this.shadow.scale.setTo(this.y / this.game.height);
         }
-
-
     }
 } 

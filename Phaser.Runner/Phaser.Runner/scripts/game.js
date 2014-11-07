@@ -93,7 +93,7 @@ var Runner;
             _super.call(this, game, x, y, "player", frame);
 
             this.anchor.setTo(0.5);
-            this.scale.setTo(0.3);
+            this.scale.setTo(0.25);
             this.animations.add('fly', [0, 1, 2, 3, 2, 1]);
             this.animations.play('fly', 8, true);
 
@@ -121,11 +121,31 @@ var Runner;
             this.jetSound.stop();
         };
 
+        Player.prototype.updateAngle = function () {
+            //Change player angle
+            if (this.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
+                if (this.angle > 0) {
+                    this.angle = 0;
+                }
+                if (this.angle > Player.PlayerMinAngle) {
+                    this.angle -= 0.5;
+                }
+            }
+
+            if (this.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
+                if (this.angle < Player.PlayerMaxAngle) {
+                    this.angle += 0.5;
+                }
+            }
+        };
+
         Player.prototype.updateShadow = function () {
             //Scale de shadow by playr distance from the floor
             this.shadow.scale.setTo(this.y / this.game.height);
         };
         Player.JumpHeigth = 25;
+        Player.PlayerMinAngle = -15;
+        Player.PlayerMaxAngle = 15;
         return Player;
     })(Phaser.Sprite);
     Runner.Player = Player;
@@ -210,29 +230,6 @@ var Runner;
         return Scoreboard;
     })(Phaser.Group);
     Runner.Scoreboard = Scoreboard;
-})(Runner || (Runner = {}));
-var Runner;
-(function (Runner) {
-    var PhaserRunner = (function (_super) {
-        __extends(PhaserRunner, _super);
-        function PhaserRunner() {
-            var width = window.innerWidth * window.devicePixelRatio;
-            var height = window.innerHeight * window.devicePixelRatio;
-
-            _super.call(this, width, height, Phaser.CANVAS, '');
-
-            //Add Game States
-            this.state.add("Boot", Runner.Boot);
-            this.state.add("Preload", Runner.Preload);
-            this.state.add("MainMenu", Runner.MainMenu);
-            this.state.add("Game", Runner.Game);
-
-            //Start the Boot State (It's always the first state)
-            this.state.start("Boot");
-        }
-        return PhaserRunner;
-    })(Phaser.Game);
-    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 var Runner;
 (function (Runner) {
@@ -348,22 +345,7 @@ var Runner;
                     this.player.stopFly();
                 }
 
-                //Change player angle
-                if (this.player.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
-                    if (this.player.angle > 0) {
-                        this.player.angle = 0;
-                    }
-                    if (this.player.angle > Game.PlayerMinAngle) {
-                        this.player.angle -= 0.5;
-                    }
-                }
-
-                if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
-                    if (this.player.angle < Game.PlayerMaxAngle) {
-                        this.player.angle += 0.5;
-                    }
-                }
-
+                this.player.updateAngle();
                 this.player.updateShadow();
 
                 //Checking if the player collides with the ground
@@ -536,8 +518,6 @@ var Runner;
             this.game.debug.text(this.game.time.fps.toString() || '--', 2, 14, "#00ff00");
         };
         Game.BackgroundVelocity = -100;
-        Game.PlayerMinAngle = -15;
-        Game.PlayerMaxAngle = 15;
         Game.CoinSpacingX = 10;
         Game.CoinSpacingY = 10;
         return Game;
@@ -651,5 +631,28 @@ var Runner;
         return Preload;
     })(Phaser.State);
     Runner.Preload = Preload;
+})(Runner || (Runner = {}));
+var Runner;
+(function (Runner) {
+    var PhaserRunner = (function (_super) {
+        __extends(PhaserRunner, _super);
+        function PhaserRunner() {
+            var width = window.innerWidth * window.devicePixelRatio;
+            var height = window.innerHeight * window.devicePixelRatio;
+
+            _super.call(this, width, height, Phaser.CANVAS, '');
+
+            //Add Game States
+            this.state.add("Boot", Runner.Boot);
+            this.state.add("Preload", Runner.Preload);
+            this.state.add("MainMenu", Runner.MainMenu);
+            this.state.add("Game", Runner.Game);
+
+            //Start the Boot State (It's always the first state)
+            this.state.start("Boot");
+        }
+        return PhaserRunner;
+    })(Phaser.Game);
+    Runner.PhaserRunner = PhaserRunner;
 })(Runner || (Runner = {}));
 //# sourceMappingURL=game.js.map

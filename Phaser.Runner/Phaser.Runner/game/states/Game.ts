@@ -3,8 +3,6 @@
     export class Game extends Phaser.State {
 
         private static BackgroundVelocity: number = -100;
-        private static PlayerMinAngle: number = -15;
-        private static PlayerMaxAngle: number = 15;
         private static CoinSpacingX: number = 10;
         private static CoinSpacingY: number = 10;
 
@@ -103,23 +101,7 @@
                     this.player.stopFly();
                 }
 
-                //Change player angle
-                if (this.player.body.velocity.y < 0 || this.game.input.activePointer.isDown) {
-                    if (this.player.angle > 0) {
-                        this.player.angle = 0;
-                    }
-                    if (this.player.angle > Game.PlayerMinAngle) {
-                        this.player.angle -= 0.5;
-                    }
-                }
-
-                if (this.player.body.velocity.y >= 0 && !this.game.input.activePointer.isDown) {
-
-                    if (this.player.angle < Game.PlayerMaxAngle) {
-                        this.player.angle += 0.5;
-                    }
-                }
-
+                this.player.updateAngle();
                 this.player.updateShadow();
 
                 //Checking if the player collides with the ground
@@ -157,7 +139,6 @@
                 this.scoreText.text = 'Score: ' + this.score;
             }, this);
         }
-
 
         private createCoin(x?: number, y?: number): Coin {
             x = x || this.spawnX;
@@ -290,7 +271,6 @@
             this.coinGenerator.timer.destroy();
             this.enemyGenerator.timer.destroy();
         }
-
 
         public render() {
             this.game.debug.text(this.game.time.fps.toString() || '--', 2, 14, "#00ff00");
