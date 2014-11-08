@@ -262,6 +262,9 @@ var Runner;
                 this.scale.forceLandscape = true;
                 this.scale.pageAlignHorizontally = true;
                 this.scale.setScreenSize(true);
+                this.game.scale.startFullScreen();
+                this.game.scale.setShowAll();
+                this.game.scale.refresh();
             }
 
             //  By this point the preloader assets have loaded to the cache, we've set the game settings
@@ -306,7 +309,7 @@ var Runner;
             this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
             //Add gravity to the Y axis
-            this.game.physics.arcade.gravity.y = 400;
+            this.game.physics.arcade.gravity.y = 500;
 
             //Add Physics to ground to have the collide methods but the floor does not have gravity and its immovable
             this.game.physics.arcade.enableBody(this.ground);
@@ -637,8 +640,21 @@ var Runner;
     var PhaserRunner = (function (_super) {
         __extends(PhaserRunner, _super);
         function PhaserRunner() {
-            var width = window.innerWidth * window.devicePixelRatio;
-            var height = window.innerHeight * window.devicePixelRatio;
+            //var width = window.innerWidth * window.devicePixelRatio;
+            //var height = window.innerHeight * window.devicePixelRatio;
+            var w = window.innerWidth * window.devicePixelRatio, h = window.innerHeight * window.devicePixelRatio, width = (h > w) ? h : w, height = (h > w) ? w : h;
+
+            // Hack to avoid iPad Retina and large Android devices. Tell it to scale up.
+            if (window.innerWidth >= 1024 && window.devicePixelRatio >= 2) {
+                width = Math.round(width / 2);
+                height = Math.round(height / 2);
+            }
+
+            // reduce screen size by one 3rd on devices like Nexus 5
+            if (window.devicePixelRatio === 3) {
+                width = Math.round(width / 3) * 2;
+                height = Math.round(height / 3) * 2;
+            }
 
             _super.call(this, width, height, Phaser.CANVAS, '');
 

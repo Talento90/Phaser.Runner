@@ -60,7 +60,7 @@
             this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
             //Add gravity to the Y axis
-            this.game.physics.arcade.gravity.y = 400;
+            this.game.physics.arcade.gravity.y = 500;
 
             //Add Physics to ground to have the collide methods but the floor does not have gravity and its immovable
             this.game.physics.arcade.enableBody(this.ground);

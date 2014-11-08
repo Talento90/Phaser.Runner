@@ -26,10 +26,15 @@
                 this.scale.pageAlignHorizontally = true;
             } else {
                 //  Same goes for mobile settings.
+              
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
                 this.scale.forceLandscape = true;
                 this.scale.pageAlignHorizontally = true;
                 this.scale.setScreenSize(true);
+                this.game.scale.startFullScreen();         
+                this.game.scale.setShowAll();
+                this.game.scale.refresh();
+                
             }
 
             //  By this point the preloader assets have loaded to the cache, we've set the game settings
